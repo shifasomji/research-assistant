@@ -1,0 +1,10 @@
+import React, { useEffect, useState } from 'react';
+import { useParams } from 'react-router-dom';
+import { askAI, cleanAbstract, getPaper } from '../services/apiService';
+export default function PaperDetailsPage() {
+  const { id } = useParams(); const [paper, setPaper] = useState(null); const [question, setQuestion] = useState(''); const [answer, setAnswer] = useState(''); const [busy, setBusy] = useState(false);
+  useEffect(() => { getPaper(id).then((response) => setPaper(response.data)); }, [id]);
+  const ask = async (mode = 'question') => { setBusy(true); setAnswer(''); try { setAnswer((await askAI({ paperId: id, question, mode })).data.answer); } catch (error) { setAnswer(error.response?.data?.error || 'AI request failed.'); } finally { setBusy(false); } };
+  if (!paper) return <p className="notice">Loading paper…</p>;
+  return <><a className="back-link" href="/library">← Back to library</a><article className="detail-header"><p className="eyebrow">{paper.source === 'upload' ? 'UPLOADED PDF' : 'SAVED PAPER'}</p><h1>{paper.title}</h1><p>{paper.authors.join(', ') || 'Authors unavailable'} {paper.year ? `· ${paper.year}` : ''}</p>{paper.link && <a href={paper.link} target="_blank" rel="noreferrer">Open original paper ↗</a>}</article><section className="ai-panel"><div className="section-heading"><div><p className="eyebrow">AI READING ROOM</p><h2>Understand this paper</h2></div><button className="button secondary" onClick={() => ask('summary')} disabled={busy}>{busy ? 'Working…' : 'Summarize paper'}</button></div><div className="question-row"><input value={question} onChange={(e) => setQuestion(e.target.value)} placeholder="Ask a question about the paper…" /><button className="button" onClick={() => ask()} disabled={busy || !question.trim()}>Ask AI</button></div>{answer && <div className="answer">{answer}</div>}</section><section className="abstract"><p className="eyebrow">ABSTRACT</p><p>{paper.abstract ? cleanAbstract(paper.abstract) : 'No abstract was provided. Upload a text-based PDF to enable richer analysis.'}</p></section></>;
+}
