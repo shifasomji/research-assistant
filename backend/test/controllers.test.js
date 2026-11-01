@@ -151,3 +151,78 @@ test('local metadata handles empty text and normal academic text', () => {
   assert.equal(metadata.parseLocalText(parsedText, 'paper.pdf').year, 2024);
   assert.equal(metadata.parseLocalText(parsedText, 'paper.pdf').title, 'A research paper');
 });
+
+// Round 1: provider variation and upload failure paths.
+test('Semantic Scholar fills missing fields and selects DOI, URL and PDF links in priority order', async () => {
+  const original = process.env.SEMANTIC_SCHOLAR_API_KEY;
+  process.env.SEMANTIC_SCHOLAR_API_KEY = 'coverage-test-key';
+  try {
+    axios.get.mock.mockImplementation(async () => ({ data: { data: [
+      { externalIds: { DOI: '10/doi' }, url: 'https://paper.test/1' },
+      { url: 'https://paper.test/2', authors: [] },
+      { paperId: 's3', externalIds: {}, openAccessPdf: {} },
+    ] } }));
+    await search.searchPapers({ query: { query: 'metadata', limit: 'invalid' } }, res);
+    assert.equal(res.code, 200);
+    assert.deepEqual(res.body, [
+      { id: '10/doi', title: 'Untitled paper', authors: [], abstract: 'No abstract available.', year: undefined, link: 'https://paper.test/1' },
+      { id: 'https://paper.test/2', title: 'Untitled paper', authors: [], abstract: 'No abstract available.', year: undefined, link: 'https://paper.test/2' },
+      { id: 's3', title: 'Untitled paper', authors: [], abstract: 'No abstract available.', year: undefined, link: '' },
+    ]);
+    assert.equal(axios.get.mock.calls[0].arguments[1].params.limit, 10);
+    assert.deepEqual(axios.get.mock.calls[0].arguments[1].headers, { 'x-api-key': 'coverage-test-key' });
+  } finally {
+    if (original === undefined) delete process.env.SEMANTIC_SCHOLAR_API_KEY;
+    else process.env.SEMANTIC_SCHOLAR_API_KEY = original;
+  }
+});
+test('missing Semantic Scholar data falls back to Crossref with title, partial authors and explicit URL', async () => {
+  axios.get.mock.mockImplementation(async url => url.includes('semanticscholar') ? { data: {} } : { data: { message: { items: [
+    { DOI: '10/test', title: ['Crossref title'], author: [{ given: 'Ada' }, { family: 'Lovelace' }, {}], abstract: '<p>A finding</p>', URL: 'https://publisher.test' },
+    { DOI: '10/missing', published: {} },
+  ] } } });
+  await search.searchPapers({ query: { query: 'fallback', limit: 3 } }, res);
+  assert.equal(res.code, 200);
+  assert.deepEqual(res.body, [
+    { id: '10/test', title: 'Crossref title', authors: ['Ada', 'Lovelace', ''], abstract: 'A finding', year: undefined, link: 'https://publisher.test' },
+    { id: '10/missing', title: 'Untitled paper', authors: [], abstract: 'No abstract available.', year: undefined, link: 'https://doi.org/10/missing' },
+  ]);
+  assert.equal(axios.get.mock.calls[1].arguments[1].params.rows, 3);
+});
+test('missing Crossref items returns an empty successful result', async () => {
+  axios.get.mock.mockImplementation(async url => url.includes('semanticscholar') ? { data: {} } : { data: { message: {} } });
+  await search.searchPapers({ query: { query: 'empty' } }, res);
+  assert.equal(res.code, 200); assert.deepEqual(res.body, []);
+});
+test('upload uses extracted metadata when overrides are absent', async () => {
+  const abstract = 'Important research findings from the remote metadata service. '.repeat(3).trim();
+  axios.post.mock.mockImplementation(async () => ({ data: `<title>Extracted title</title><author><forename>Ada</forename><surname>Lovelace</surname></author><abstract>${abstract}</abstract><date>2026</date>` }));
+  model.create.mock.mockImplementation(async paper => ({ id: 9, ...paper }));
+  const buffer = Buffer.from('PDF fixture');
+  await upload.uploadPaper({ file: { buffer, originalname: 'paper.pdf' }, body: {} }, res);
+  assert.equal(res.code, 201);
+  assert.deepEqual(model.create.mock.calls[0].arguments[0], {
+    title: 'Extracted title', authors: ['Ada Lovelace'], abstract, year: 2026,
+    pdfPath: res.body.pdfPath, fullText: parsedText, source: 'upload',
+  });
+  assert.strictEqual(fs.writeFileSync.mock.calls[0].arguments[1], buffer);
+  assert.ok(fs.writeFileSync.mock.calls[0].arguments[0].endsWith(res.body.pdfPath));
+  assert.equal(destroy.mock.callCount(), 1);
+});
+test('upload abstract override takes precedence over extracted abstract', async () => {
+  mock.method(console, 'warn', () => {});
+  model.create.mock.mockImplementation(async paper => paper);
+  await upload.uploadPaper({ file: { buffer: Buffer.from('PDF'), originalname: 'paper.pdf' }, body: { abstract: 'User abstract' } }, res);
+  assert.equal(res.code, 201);
+  assert.equal(res.body.abstract, 'User abstract');
+});
+for (const stage of ['write', 'database']) test(`upload reports ${stage} failure and stops subsequent work`, async () => {
+  mock.method(console, 'warn', () => {});
+  if (stage === 'write') fs.writeFileSync.mock.mockImplementation(() => { throw new Error('disk full'); });
+  else model.create.mock.mockImplementation(async () => { throw new Error('database unavailable'); });
+  await upload.uploadPaper({ file: { buffer: Buffer.from('PDF'), originalname: 'paper.pdf' }, body: {} }, res);
+  assert.equal(res.code, 422);
+  assert.deepEqual(res.body, { error: 'The PDF could not be processed.' });
+  assert.equal(model.create.mock.callCount(), stage === 'write' ? 0 : 1);
+  assert.equal(fs.writeFileSync.mock.callCount(), 1);
+});

@@ -119,3 +119,70 @@ for (const [error, message] of [[{ response: { data: { error: 'AI unavailable' }
     expect(screen.getByRole('button', { name: 'Summarize paper' })).toBeEnabled();
   });
 }
+
+// Round 1: optional metadata, pending states and upload navigation.
+test('library renders uploaded papers without year or abstract and preserves other papers after deletion', async () => {
+  const uploaded = { ...paper, id: 2, title: 'Uploaded paper', source: 'upload', year: null, abstract: '' };
+  api.getLibrary.mockResolvedValueOnce({ data: [paper, uploaded] });
+  let resolveDelete;
+  api.deletePaper.mockImplementationOnce(() => new Promise(resolve => { resolveDelete = resolve; }));
+  render(<LibraryPage />);
+  await screen.findByRole('link', { name: uploaded.title });
+  expect(screen.getByText('UPLOADED PDF · YEAR')).toBeInTheDocument();
+  expect(screen.getByText('Ready for AI analysis.')).toBeInTheDocument();
+  fireEvent.click(screen.getAllByRole('button', { name: 'Remove' })[1]);
+  expect(api.deletePaper).toHaveBeenCalledWith(2);
+  expect(screen.getByRole('link', { name: uploaded.title })).toBeInTheDocument();
+  resolveDelete({});
+  await waitFor(() => expect(screen.queryByRole('link', { name: uploaded.title })).not.toBeInTheDocument());
+  expect(screen.getByRole('link', { name: paper.title })).toBeInTheDocument();
+  expect(screen.getByText('1 saved')).toBeInTheDocument();
+});
+function renderRoundOneDetails() {
+  return render(<MemoryRouter initialEntries={['/paper/7']}><Routes><Route path="/paper/:id" element={<PaperDetailsPage />} /></Routes></MemoryRouter>);
+}
+test('paper details render uploaded metadata fallbacks and an external original link', async () => {
+  api.getPaper.mockResolvedValueOnce({ data: { ...paper, source: 'upload', authors: [], year: null, abstract: '', link: 'https://paper.test/original' } });
+  renderRoundOneDetails();
+  await screen.findByRole('heading', { name: paper.title });
+  expect(api.getPaper).toHaveBeenCalledWith('7');
+  expect(screen.getByText('UPLOADED PDF')).toBeInTheDocument();
+  expect(screen.getByText('Authors unavailable')).toBeInTheDocument();
+  expect(screen.getByText(/No abstract was provided/)).toBeInTheDocument();
+  expect(screen.getByRole('link', { name: /Open original paper/ })).toHaveAttribute('href', 'https://paper.test/original');
+});
+test('a null paper response leaves the page in its current loading state', async () => {
+  api.getPaper.mockResolvedValueOnce({ data: null });
+  renderRoundOneDetails();
+  await waitFor(() => expect(api.getPaper).toHaveBeenCalledWith('7'));
+  expect(screen.getByText('Loading paper…')).toBeInTheDocument();
+  expect(screen.queryByRole('button', { name: 'Ask AI' })).not.toBeInTheDocument();
+});
+test('search sorts multiple undated results after numeric string years', async () => {
+  api.searchPapers.mockResolvedValueOnce({ data: [
+    { ...paper, id: 2, title: 'Unknown date', year: undefined },
+    { ...paper, id: 3, title: 'Invalid date', year: 'unknown' },
+    { ...paper, id: 4, title: 'Dated result', year: '2025' },
+  ] });
+  render(<SearchPage />); runSearch();
+  await screen.findByText('Dated result');
+  expect(screen.getAllByRole('heading', { level: 3 }).map(x => x.textContent)).toEqual(['Dated result', 'Unknown date', 'Invalid date']);
+});
+test('upload shows fallback error for network failure and allows a retry that navigates to the saved paper', async () => {
+  const originalLocation = window.location;
+  Object.defineProperty(window, 'location', { configurable: true, value: { href: '/' } });
+  try {
+    api.uploadPaper.mockRejectedValueOnce(new Error('offline')).mockResolvedValueOnce({ data: { id: 42 } });
+    const { container } = render(<SearchPage />);
+    const file = new File(['PDF'], 'paper.pdf', { type: 'application/pdf' });
+    fireEvent.change(container.querySelector('input[type="file"]'), { target: { files: [file] } });
+    fireEvent.click(screen.getByRole('button', { name: 'Upload PDF' }));
+    expect(await screen.findByText('Upload failed.')).toBeInTheDocument();
+    fireEvent.click(screen.getByRole('button', { name: 'Upload PDF' }));
+    await waitFor(() => expect(window.location.href).toBe('/paper/42'));
+    expect(api.uploadPaper).toHaveBeenCalledTimes(2);
+    expect(api.uploadPaper.mock.calls[1][0].get('file')).toBe(file);
+  } finally {
+    Object.defineProperty(window, 'location', { configurable: true, value: originalLocation });
+  }
+});
