@@ -2,6 +2,8 @@
 
 ResearchLLM is a local AI research assistant for discovering, organizing, and understanding scholarly papers. It provides a React web interface backed by an Express API, a local SQLite library, PDF text extraction, optional GROBID metadata enrichment, and OpenAI-powered summaries and question answering.
 
+> **Final test-suite evaluation:** Five regression tests intentionally remain failing because they expose known application defects. Expected results are **37 passed / 2 failed** for the backend and **32 passed / 3 failed** for the frontend. Both commands exit **1**. See [Automated tests and coverage](#automated-tests-and-coverage) for reproduction instructions and the defect list.
+
 ## Features
 
 - **Scholarly search** — searches Semantic Scholar first and falls back to Crossref when Semantic Scholar is unavailable or rate-limited.
@@ -44,7 +46,7 @@ The backend and frontend are separate Node.js applications. The frontend develop
 
 Install the following before starting:
 
-- Node.js 18 or newer
+- Node.js **24.21.0** (the tested version, recorded in `.nvmrc`) and npm (tested with **11.19.0**)
 - npm
 - Docker Desktop, only if using GROBID metadata extraction
 - An OpenAI API key, only if using summaries or paper Q&A
@@ -76,17 +78,18 @@ Do not commit `.env`, API keys, `database.sqlite`, or uploaded PDFs. The backend
 
 ## Installation
 
-From the repository root:
+From the repository root, install the dependencies locked for both applications:
 
 ```bash
-cd backend
-npm install
+# Optional: if using nvm, select the version recorded in .nvmrc.
+nvm install
+nvm use
 
-cd ../frontend
-npm install
+npm ci --prefix backend
+npm ci --prefix frontend
 ```
 
-Each application has its own `package.json` and lockfile, so dependencies must be installed in both directories.
+If you do not use nvm, install Node.js 24.21.0 directly and run the two `npm ci` commands. Each application has its own `package.json` and committed `package-lock.json`; there is no root npm package. Install development dependencies too: backend coverage requires the locked `c8` dev dependency. Internet access is needed for dependency installation. Application configuration and server startup below are needed only to run the app, not the automated tests.
 
 ## Start the application
 
@@ -275,3 +278,95 @@ Start GROBID and confirm `curl http://localhost:8070/api/isalive` returns `true`
 ### AI features return an error
 
 Set a valid `OPENAI_API_KEY` in `backend/.env`, then restart the backend. Never expose or commit the key.
+
+## Automated tests and coverage
+
+### Expected final results: five known-defect failures
+
+This repository preserves the final suite from a two-round test-improvement experiment. **Production defects were deliberately left unfixed**, and their regression tests assert the intended behavior. They are ordinary failing tests, labeled `[DEFECT]`; none is skipped, marked TODO, or changed to accept buggy behavior.
+
+| Suite | Total | Passing | Failing | Skipped | Expected exit code |
+| --- | ---: | ---: | ---: | ---: | ---: |
+| Backend (`node:test`) | 39 | 37 | 2 | 0 | **1** |
+| Frontend (Jest / React Testing Library) | 35 | 32 | 3 | 0 | **1** |
+
+A nonzero exit code is expected evidence that the suite detects these known application defects, rather than an installation or test-runner failure. Additional failures, different counts, or dependency errors are not part of the expected result. Coverage commands also exit 1 while still producing coverage reports. No script suppresses or converts failures to success.
+
+| Regression | Test file | Expected behavior and observed defect |
+| --- | --- | --- |
+| GROBID title/year selection | `backend/test/pdfMetadata.test.js` | Expected article title and published year; returns the earlier journal title and generic date instead. |
+| PDF parser cleanup | `backend/test/controllers.test.js` | Parser should be destroyed after extraction fails; `destroy()` is never called. |
+| Library loading failure | `frontend/src/pages/errors.regression.test.js` | A failed request should be contained; the loading effect produces an unhandled rejection. |
+| Library deletion failure | `frontend/src/pages/errors.regression.test.js` | The paper should remain and the failure should be contained; an unhandled rejection escapes the event handler. |
+| Paper loading failure | `frontend/src/pages/errors.regression.test.js` | A missing-paper (404) request should be contained; the loading effect produces an unhandled rejection. |
+
+See the [Round 2 evaluation](reports/round-2-evaluation.md) for exact test names, requirements analysis, root causes, failure output, repeated-run evidence, and the distinction between confirmed defects and unspecified UX/retention policies. The [Round 1 report](reports/round-1-coverage.md) records the coverage-directed baseline.
+
+### Install and run the complete suites
+
+Use the Node/npm versions and `npm ci` commands in [Installation](#installation). Commands below run from the **repository root** in a macOS/Linux shell:
+
+```bash
+npm test --prefix backend
+```
+
+```bash
+CI=true npm test --prefix frontend -- --watchAll=false --runInBand
+```
+
+Run both commands independently: a shell or CI step configured to stop on the first nonzero exit will stop after the backend's two known failures. The frontend flags disable watch mode and run tests serially for deterministic reproduction. In PowerShell, set `$env:CI="true"` before running the frontend npm command without the `CI=true` prefix.
+
+Do not run bare `node --test` from the repository root: recursive discovery also finds Jest frontend files, which Node's built-in runner cannot execute. The prefix commands select the correct application and runner.
+
+Tests require **no `.env`, API keys, running servers, Docker, GROBID, or network access after dependencies are installed**. External HTTP, PDF parsing, and backend persistence are mocked. The automated suites leave the local database and uploaded files untouched. Jest setup is in `frontend/src/setupTests.js` and is loaded by `react-scripts` automatically; no global Jest, pytest, c8, or additional test configuration is required.
+
+### Reproduce coverage
+
+The package scripts preserve the commands and source-file scope used in both experiment rounds:
+
+```bash
+npm run test:coverage --prefix backend
+```
+
+```bash
+CI=true npm run test:coverage --prefix frontend
+```
+
+| Suite | Statements | Branches | Functions | Lines |
+| --- | ---: | ---: | ---: | ---: |
+| Backend, measured scope | 100.00% | 100.00% | 100.00% | 100.00% |
+| Frontend, measured scope | 100.00% | 100.00% | 100.00% | 100.00% |
+
+These figures coexist with the five failing regression tests: executing every measured branch does not prove the outputs are correct.
+
+- **Backend:** `c8 --reporter=text --reporter=json-summary node --test`, executed in `backend/`. Reports appear in the terminal and `backend/coverage/coverage-summary.json`. The unchanged default c8 scope covers the four loaded controllers and `services/pdfMetadata.js`; it does not cover the entire backend, database, or HTTP wiring.
+- **Frontend:** `react-scripts test --verbose --watchAll=false --runInBand --coverage --collectCoverageFrom="src/**/*.{js,jsx}" --collectCoverageFrom="!src/index.js"`, executed in `frontend/` with `CI=true`. Reports appear in the terminal and `frontend/coverage/`, including `lcov-report/index.html`, `lcov.info`, and `coverage-final.json`. The scope is `App.js`, `PaperCard.js`, `SearchBar.js`, the three pages, and `apiService.js`. Bootstrap `src/index.js` is excluded to match the original baseline; CRA provides the standard test/setup exclusions.
+
+Generated coverage directories and `node_modules` are ignored by Git. Historical evaluation logs, summaries, and diagnostic scripts are deliberately kept under `reports/round-2-artifacts/`. React Router may print migration warnings during frontend tests; those warnings are separate from the three known rejection failures.
+
+### Inspect regressions and supporting experiments
+
+To run only the GROBID regression from the repository root:
+
+```bash
+npm test --prefix backend -- --test-name-pattern="GROBID selects article" test/pdfMetadata.test.js
+```
+
+To run the three frontend request-failure regressions:
+
+```bash
+CI=true npm test --prefix frontend -- --watchAll=false --runInBand --runTestsByPath src/pages/errors.regression.test.js
+```
+
+These focused commands intentionally fail too. Use the complete-suite commands above for the reported counts and coverage comparison.
+
+Optional diagnostic commands, from the repository root:
+
+```bash
+node reports/round-2-artifacts/mutation-runner.cjs
+node reports/round-2-artifacts/upload-retention-probe.cjs
+```
+
+The mutation harness compares six selected faults against Round 1 and Round 2 tests (4/6 versus 6/6 detected). It requires Git history containing the Round 1 commit named in the evaluation report; a shallow checkout without that commit must fetch the history first. Mutations are process-local and never edit production files. The retention probe uses and removes a temporary upload directory; it does not access the application's real database or uploads.
+
+These are controller/service and React workflow tests. Real SQLite persistence, PDF workers, multipart MIME/15 MB limits, HTTP route integration, external providers, and actual browser navigation remain outside the evaluated suite. See the reports for the full limitations.

@@ -1,0 +1,30 @@
+[mutation applied] upload-year-override
+✖ upload extracts text, sanitizes filename and respects metadata overrides (2.484541ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 65.803459
+
+✖ failing tests:
+
+test at test/controllers.test.js:193:1
+✖ upload extracts text, sanitizes filename and respects metadata overrides (2.484541ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  2024 !== '2025'
+  
+      at TestContext.<anonymous> (/Users/shifasomji/Documents/Purdue/Fall 26/CS 593 - ASE/research-assistant/backend/test/controllers.test.js:200:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 2024,
+    expected: '2025',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

@@ -61,3 +61,14 @@ test('local parsing filters publication boilerplate and affiliations and cleans 
 test('local parsing falls back to case-insensitive filename without a title and finds year without abstract', () => {
   assert.deepEqual(parseLocalText('Purdue University\n2023', 'Scanned.PDF'), { title: 'Scanned', authors: [], abstract: '', year: 2023 });
 });
+
+// Intentionally failing regression. Do not change these expectations to the first XML values.
+test('[DEFECT] GROBID selects article title and published year ahead of journal and generic date', async () => {
+  axios.post.mock.mockImplementation(async () => ({ data: `
+    <title level="m">Journal title</title>
+    <title level="a">Article title</title>
+    <date>2019</date>
+    <date type="published">2025</date>` }));
+  const result = await enrichWithGrobid(buffer, fallback);
+  assert.deepEqual({ title: result.title, year: result.year }, { title: 'Article title', year: 2025 });
+});

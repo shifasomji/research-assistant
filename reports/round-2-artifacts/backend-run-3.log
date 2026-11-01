@@ -1,0 +1,101 @@
+✔ search rejects absent and whitespace queries without contacting providers (1.289791ms)
+✔ search normalizes Semantic Scholar papers, trims query and caps limit (0.363125ms)
+✔ search falls back to Crossref after provider failure (0.236583ms)
+✔ search falls back to Crossref after empty results (0.653584ms)
+✔ search reports total provider failure (0.160875ms)
+✔ save cleans abstract and persists search source (0.186708ms)
+✔ Unable to save paper. (0.120125ms)
+✔ Unable to load library. (0.107167ms)
+✔ Unable to load paper. (0.122166ms)
+✔ Unable to delete paper. (0.102041ms)
+✔ library lists empty and populated collections (0.122041ms)
+✔ library retrieves and deletes existing papers and reports missing records (0.183583ms)
+✔ AI validates input, missing papers and missing API key (0.214792ms)
+✔ AI summary sends grounded prompt and returns answer (0.289084ms)
+✔ AI question sends grounded prompt and returns answer (0.14825ms)
+✔ AI uses abstract fallback and reports upstream failure (0.106666ms)
+✔ upload requires a file (0.139958ms)
+✔ upload extracts text, sanitizes filename and respects metadata overrides (1.109833ms)
+✔ upload reports unreadable PDF without writing storage (0.141291ms)
+✔ local metadata handles empty text and normal academic text (0.386041ms)
+✔ Semantic Scholar fills missing fields and selects DOI, URL and PDF links in priority order (0.173ms)
+✔ missing Semantic Scholar data falls back to Crossref with title, partial authors and explicit URL (0.386666ms)
+✔ missing Crossref items returns an empty successful result (0.226ms)
+✔ upload uses extracted metadata when overrides are absent (0.903291ms)
+✔ upload abstract override takes precedence over extracted abstract (0.221125ms)
+✔ upload reports write failure and stops subsequent work (0.211791ms)
+✔ upload reports database failure and stops subsequent work (0.149792ms)
+✖ [DEFECT] upload destroys the PDF parser when text extraction fails (0.546709ms)
+✔ GROBID extracts and cleans metadata and sends the PDF as multipart (2.524292ms)
+✔ GROBID falls back for empty XML (0.566375ms)
+✔ GROBID falls back for unrecognized XML (0.147209ms)
+✔ GROBID falls back for non-string response (0.136625ms)
+✔ GROBID rejects low quality abstract: Too short (0.147042ms)
+✔ GROBID rejects low quality abstract: For details (0.161583ms)
+✔ GROBID rejects low quality abstract: Author contributions (0.113458ms)
+✔ GROBID connection failure returns local metadata and records a diagnostic (0.139625ms)
+✔ local parsing filters publication boilerplate and affiliations and cleans abstract footnotes (0.717834ms)
+✔ local parsing falls back to case-insensitive filename without a title and finds year without abstract (0.145458ms)
+✖ [DEFECT] GROBID selects article title and published year ahead of journal and generic date (0.760083ms)
+ℹ tests 39
+ℹ suites 0
+ℹ pass 37
+ℹ fail 2
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 120.629375
+
+✖ failing tests:
+
+test at test/controllers.test.js:301:1
+✖ [DEFECT] upload destroys the PDF parser when text extraction fails (0.546709ms)
+  AssertionError [ERR_ASSERTION]: parser must be destroyed even after getText rejects
+  
+  0 !== 1
+  
+      at TestContext.<anonymous> (/Users/shifasomji/Documents/Purdue/Fall 26/CS 593 - ASE/research-assistant/backend/test/controllers.test.js:308:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: false,
+    code: 'ERR_ASSERTION',
+    actual: 0,
+    expected: 1,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
+
+test at test/pdfMetadata.test.js:66:1
+✖ [DEFECT] GROBID selects article title and published year ahead of journal and generic date (0.760083ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    {
+  +   title: 'Journal title',
+  +   year: 2019
+  -   title: 'Article title',
+  -   year: 2025
+    }
+  
+      at TestContext.<anonymous> (/Users/shifasomji/Documents/Purdue/Fall 26/CS 593 - ASE/research-assistant/backend/test/pdfMetadata.test.js:73:10)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async Test.processPendingSubtests (node:internal/test_runner/test:974:7) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: { title: 'Journal title', year: 2019 },
+    expected: { title: 'Article title', year: 2025 },
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }
+-----------------------|---------|----------|---------|---------|-------------------
+File                   | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
+-----------------------|---------|----------|---------|---------|-------------------
+All files              |     100 |      100 |     100 |     100 |                   
+ controllers           |     100 |      100 |     100 |     100 |                   
+  libraryController.js |     100 |      100 |     100 |     100 |                   
+  llmController.js     |     100 |      100 |     100 |     100 |                   
+  searchController.js  |     100 |      100 |     100 |     100 |                   
+  uploadController.js  |     100 |      100 |     100 |     100 |                   
+ services              |     100 |      100 |     100 |     100 |                   
+  pdfMetadata.js       |     100 |      100 |     100 |     100 |                   
+-----------------------|---------|----------|---------|---------|-------------------

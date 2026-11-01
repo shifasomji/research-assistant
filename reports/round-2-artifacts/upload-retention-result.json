@@ -1,0 +1,10 @@
+{
+  "status": 422,
+  "response": {
+    "error": "The PDF could not be processed."
+  },
+  "persistenceAttempts": 1,
+  "retainedFiles": 1,
+  "retainedOriginalBytes": true,
+  "classification": "Confirmed retention; desired rollback/retention policy is unspecified"
+}

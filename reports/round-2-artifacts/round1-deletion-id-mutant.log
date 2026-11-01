@@ -1,0 +1,30 @@
+[mutation applied] deletion-id
+✖ library retrieves and deletes existing papers and reports missing records (1.568292ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 75.012542
+
+✖ failing tests:
+
+test at test/controllers.test.js:93:1
+✖ library retrieves and deletes existing papers and reports missing records (1.568292ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  'wrong-id' !== '7'
+  
+      at TestContext.<anonymous> (/Users/shifasomji/Documents/Purdue/Fall 26/CS 593 - ASE/research-assistant/backend/test/controllers.test.js:102:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 'wrong-id',
+    expected: '7',
+    operator: 'strictEqual',
+    diff: 'simple'
+  }

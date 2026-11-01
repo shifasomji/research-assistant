@@ -1,0 +1,40 @@
+[mutation applied] search-author
+✖ search normalizes Semantic Scholar papers, trims query and caps limit (1.755875ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 75.748875
+
+✖ failing tests:
+
+test at test/controllers.test.js:46:1
+✖ search normalizes Semantic Scholar papers, trims query and caps limit (1.755875ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly deep-equal:
+  + actual - expected
+  
+    {
+      abstract: 'A & B',
+      authors: [
+  +     'Wrong author'
+  -     'Ada'
+      ],
+      id: 's1',
+      link: 'https://example.org/p.pdf',
+      title: 'Paper',
+      year: undefined
+  
+      at TestContext.<anonymous> (/Users/shifasomji/Documents/Purdue/Fall 26/CS 593 - ASE/research-assistant/backend/test/controllers.test.js:51:10)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: { id: 's1', title: 'Paper', authors: [ 'Wrong author' ], abstract: 'A & B', year: undefined, link: 'https://example.org/p.pdf' },
+    expected: { id: 's1', title: 'Paper', authors: [ 'Ada' ], abstract: 'A & B', year: undefined, link: 'https://example.org/p.pdf' },
+    operator: 'deepStrictEqual',
+    diff: 'simple'
+  }

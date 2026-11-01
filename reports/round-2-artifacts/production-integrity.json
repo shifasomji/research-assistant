@@ -1,0 +1,26 @@
+{
+  "checkedJavaScriptFiles": 20,
+  "changedFiles": [],
+  "sha256": {
+    "backend/app.js": "aa9e4dcb2e10098a02a89bca2a68b016ee74392b8c11adf0226a48d2f0527796",
+    "backend/models/paperModel.js": "e2d2b97f3632bd953fe5c35d9d4a7d7e2ea3295d56f2e65e5ac90b0c2f42a87f",
+    "backend/controllers/libraryController.js": "0e3fba223c2f727817f71e058fd5c143616784e686d71691f311bbbc93d18477",
+    "backend/controllers/uploadController.js": "af941db35cfb1c3353baa4d3454812d82bb97d810c2372074fe2a5d4be509cfa",
+    "backend/controllers/searchController.js": "97ec25db20e2921a9ef5c2530f98fb8a1faab81e1716dbb17a6e9b847bedf9b8",
+    "backend/controllers/llmController.js": "6315452f714fd78693ab907b2a09571d7a5b210a22a8dc246b05a054eabdb02f",
+    "backend/routes/libraryRoutes.js": "97f0dd847a58900c0c3052acfc2d3970da7621dbf855e4ba84d764b55b8be4db",
+    "backend/routes/uploadRoutes.js": "c65e6cacf1edf6bc18d6f235b625a0f63bcb230b477f1f4eede5ea9ef23a27e8",
+    "backend/routes/searchRoutes.js": "bde673e56c5e9868d9f529013d1eaf0c764c0e8f6034dcfe96b642d5403ef5db",
+    "backend/routes/llmRoutes.js": "06ce19a8807b1e0ed864788d8d07c89839d5b186c57e2e93827c944da7315e02",
+    "backend/services/pdfMetadata.js": "0c2d4bedfb6f3315e045eb0c859a1faefdbab8edf0a0030865e5079f7753681b",
+    "frontend/src/index.js": "53445b2a5be6003ce1d3f030e230ca14b02f7d9f6e80e34a0f8c3f783f5d5c86",
+    "frontend/src/setupTests.js": "22583759d0045fdf8d62c9db0aacba9fd8bddde79c671aa08c97dcfd4e930cc6",
+    "frontend/src/App.js": "32203333d100ebce87fe68b0ea403060ab23227b22b139ff445709d3f1a2b8db",
+    "frontend/src/components/PaperCard.js": "01909385eecc0e0a28a1e099787e9d5a9e61b1cd6a374df99da6b2eb189198d2",
+    "frontend/src/components/SearchBar.js": "74d2522f66bb901133c43c07434c2018a3aabe6b1b7441ba60fe053a1784c99d",
+    "frontend/src/pages/LibraryPage.js": "e83aa6ae425614fb1d851d6d4903b131de2c447ed846bafd44db9148b3ae41e4",
+    "frontend/src/pages/SearchPage.js": "fb501a93a893d09a1d3744dd733eabd31ed5b00da2313e4a04ee1828e607ba9c",
+    "frontend/src/pages/PaperDetailsPage.js": "5dc8df82c79e0f5517c3fb3755212798e757ff59aa6c5661ba15a74b1652d3da",
+    "frontend/src/services/apiService.js": "e9b83636380e169cf5bcaaa724060c3e811263ce8485f5da5859789a6719bcba"
+  }
+}

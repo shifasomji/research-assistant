@@ -8,8 +8,8 @@ const model = {};
 require.cache[require.resolve('../models/paperModel')] = { exports: model };
 const metadata = require('../services/pdfMetadata');
 const parsedText = 'A research paper\nAbstract\nUseful findings from 2024.';
-const destroy = mock.fn(async () => {});
-const getText = mock.fn(async () => ({ text: parsedText }));
+let destroy;
+let getText;
 require.cache[require.resolve('pdf-parse')] = { exports: { PDFParse: class {
   getText = getText;
   destroy = destroy;
@@ -19,27 +19,38 @@ const library = require('../controllers/libraryController');
 const llm = require('../controllers/llmController');
 const upload = require('../controllers/uploadController');
 let res;
-const originalKey = process.env.OPENAI_API_KEY;
+const environmentNames = ['OPENAI_API_KEY', 'OPENAI_MODEL', 'GROBID_URL', 'SEMANTIC_SCHOLAR_API_KEY'];
+const originalEnvironment = Object.fromEntries(environmentNames.map(name => [name, process.env[name]]));
+function response() {
+  return { code: 200, body: undefined, status(code) { this.code = code; return this; },
+    json(body) { this.body = body; return this; },
+    send: mock.fn(function () { this.body = undefined; return this; }) };
+}
 beforeEach(() => {
   for (const name of ['list', 'findById', 'create', 'remove']) model[name] = mock.fn(async () => null);
   mock.method(axios, 'get', async () => { throw new Error('Unexpected HTTP GET'); });
   mock.method(axios, 'post', async () => { throw new Error('Unexpected HTTP POST'); });
   mock.method(fs, 'writeFileSync', () => {});
-  getText.mock.resetCalls(); destroy.mock.resetCalls();
+  getText = mock.fn(async () => ({ text: parsedText }));
+  destroy = mock.fn(async () => {});
+  for (const name of environmentNames) delete process.env[name];
   process.env.OPENAI_API_KEY = 'test-only';
-  res = { code: 200, body: undefined, status(code) { this.code = code; return this; },
-    json(body) { this.body = body; return this; }, send() { return this; } };
+  res = response();
 });
 afterEach(() => {
   mock.restoreAll();
-  if (originalKey === undefined) delete process.env.OPENAI_API_KEY;
-  else process.env.OPENAI_API_KEY = originalKey;
+  for (const name of environmentNames) {
+    if (originalEnvironment[name] === undefined) delete process.env[name];
+    else process.env[name] = originalEnvironment[name];
+  }
 });
 
 test('search rejects absent and whitespace queries without contacting providers', async () => {
   for (const query of [undefined, '', '   ']) {
+    res = response();
     await search.searchPapers({ query: { query } }, res);
     assert.equal(res.code, 400);
+    assert.deepEqual(res.body, { error: 'A search query is required.' });
   }
   assert.equal(axios.get.mock.callCount(), 0);
 });
@@ -58,6 +69,13 @@ for (const empty of [false, true]) test(`search falls back to Crossref after ${e
   });
   await search.searchPapers({ query: { query: 'AI' } }, res);
   assert.equal(calls, 2);
+  assert.equal(res.code, 200);
+  assert.deepEqual(axios.get.mock.calls.map(call => call.arguments[0]), [
+    'https://api.semanticscholar.org/graph/v1/paper/search', 'https://api.crossref.org/works',
+  ]);
+  assert.equal(res.body.length, 1);
+  assert.equal(res.body[0].id, '10/test');
+  assert.equal(res.body[0].abstract, 'No abstract available.');
   assert.equal(res.body[0].title, 'Untitled paper');
   assert.deepEqual(res.body[0].authors, ['Ada Lovelace']);
   assert.equal(res.body[0].year, 2024);
@@ -66,6 +84,9 @@ for (const empty of [false, true]) test(`search falls back to Crossref after ${e
 test('search reports total provider failure', async () => {
   await search.searchPapers({ query: { query: 'AI' } }, res);
   assert.equal(res.code, 502);
+  assert.deepEqual(res.body, { error: 'Paper search is temporarily unavailable.' });
+  assert.equal(axios.get.mock.callCount(), 2);
+  assert.equal(model.create.mock.callCount(), 0);
 });
 test('save cleans abstract and persists search source', async () => {
   model.create.mock.mockImplementation(async paper => ({ ...paper, id: 1 }));
@@ -73,6 +94,8 @@ test('save cleans abstract and persists search source', async () => {
   assert.equal(res.code, 201);
   assert.equal(res.body.abstract, 'Result');
   assert.equal(res.body.source, 'search');
+  assert.deepEqual(model.create.mock.calls[0].arguments[0], { title: 'Paper', abstract: 'Result', source: 'search' });
+  assert.equal(res.body.id, 1);
 });
 for (const [handler, method, req, failure] of [
   [search.savePaper, 'create', { body: {} }, 'Unable to save paper.'],
@@ -87,55 +110,99 @@ for (const [handler, method, req, failure] of [
 test('library lists empty and populated collections', async () => {
   for (const papers of [[], [{ id: 1, title: 'Paper' }]]) {
     model.list.mock.mockImplementation(async () => papers);
+    res = response();
     await library.getLibrary({}, res); assert.deepEqual(res.body, papers);
+    assert.equal(res.code, 200);
   }
 });
 test('library retrieves and deletes existing papers and reports missing records', async () => {
   const req = { params: { id: '7' } };
   await library.getPaper(req, res); assert.equal(res.code, 404);
+  assert.deepEqual(res.body, { error: 'Paper not found.' });
+  assert.equal(model.findById.mock.calls[0].arguments[0], '7');
   model.findById.mock.mockImplementation(async () => ({ id: 7 }));
-  res.code = 200;
+  res = response();
   await library.getPaper(req, res); assert.deepEqual(res.body, { id: 7 });
+  assert.equal(res.code, 200);
+  res = response();
   await library.deletePaper(req, res); assert.equal(res.code, 404);
+  assert.deepEqual(res.body, { error: 'Paper not found.' });
+  assert.equal(res.send.mock.callCount(), 0);
+  res = response();
   model.remove.mock.mockImplementation(async () => true);
   await library.deletePaper(req, res); assert.equal(res.code, 204);
   assert.equal(model.remove.mock.calls[0].arguments[0], '7');
+  assert.equal(model.remove.mock.calls[1].arguments[0], '7');
+  assert.equal(res.send.mock.callCount(), 1);
+  assert.equal(res.body, undefined);
 });
 test('AI validates input, missing papers and missing API key', async () => {
   for (const body of [{}, { paperId: 1 }, { question: 'Why?' }]) {
+    res = response();
     await llm.askLLM({ body }, res); assert.equal(res.code, 400);
+    assert.deepEqual(res.body, { error: 'A paper and question are required.' });
   }
+  assert.equal(model.findById.mock.callCount(), 0);
   await llm.askLLM({ body: { paperId: 1, mode: 'summary' } }, res); assert.equal(res.code, 404);
+  assert.deepEqual(res.body, { error: 'Paper not found.' });
   model.findById.mock.mockImplementation(async () => ({ abstract: 'Text' }));
   delete process.env.OPENAI_API_KEY;
   await llm.askLLM({ body: { paperId: 1, mode: 'summary' } }, res); assert.equal(res.code, 503);
+  assert.deepEqual(res.body, { error: 'Set OPENAI_API_KEY in backend/.env to enable AI features.' });
   assert.equal(axios.post.mock.callCount(), 0);
 });
 for (const mode of ['summary', 'question']) test(`AI ${mode} sends grounded prompt and returns answer`, async () => {
-  model.findById.mock.mockImplementation(async () => ({ fullText: 'x'.repeat(120001), abstract: 'Fallback' }));
+  const fullText = 'Source evidence: intervention improved accuracy. '.repeat(3000);
+  model.findById.mock.mockImplementation(async () => ({ fullText, abstract: 'Fallback that must not be used' }));
   axios.post.mock.mockImplementation(async () => ({ data: { choices: [{ message: { content: 'Answer' } }] } }));
   await llm.askLLM({ body: { paperId: 1, mode, question: 'Why?' } }, res);
   assert.deepEqual(res.body, { answer: 'Answer' });
   const payload = axios.post.mock.calls[0].arguments[1];
+  assert.equal(res.code, 200);
+  assert.equal(axios.post.mock.callCount(), 1);
+  assert.equal(model.findById.mock.calls[0].arguments[0], 1);
+  assert.equal(axios.post.mock.calls[0].arguments[0], 'https://api.openai.com/v1/chat/completions');
+  assert.deepEqual(payload.messages.map(message => message.role), ['system', 'user']);
+  assert.equal(payload.messages[1].content, fullText.slice(0, 120000));
   assert.equal(payload.messages[1].content.length, 120000);
-  assert.match(payload.messages[0].content, mode === 'summary' ? /Summarize/ : /Question: Why\?/);
+  const instructions = payload.messages[0].content;
+  if (mode === 'summary') {
+    assert.match(instructions, /summari[sz]e.*paper/i);
+    for (const topic of ['contribution', 'method', 'results', 'limitations']) assert.match(instructions, new RegExp(topic, 'i'));
+  } else {
+    assert.match(instructions, /only.*paper text/i);
+    assert.match(instructions, /answer.*not present.*say so/i);
+    assert.ok(instructions.includes('Why?'));
+  }
+  assert.deepEqual(axios.post.mock.calls[0].arguments[2].headers, { Authorization: 'Bearer test-only' });
 });
 test('AI uses abstract fallback and reports upstream failure', async () => {
   model.findById.mock.mockImplementation(async () => ({ abstract: 'Abstract only' }));
   await llm.askLLM({ body: { paperId: 1, question: 'Why?' } }, res);
   assert.equal(axios.post.mock.calls[0].arguments[1].messages[1].content, 'Abstract only');
   assert.equal(res.code, 502);
+  assert.deepEqual(res.body, { error: 'The AI service could not answer right now.' });
 });
 test('upload requires a file', async () => {
   await upload.uploadPaper({ body: {} }, res); assert.equal(res.code, 400);
+  assert.deepEqual(res.body, { error: 'Please upload a PDF file.' });
+  assert.equal(getText.mock.callCount(), 0);
+  assert.equal(fs.writeFileSync.mock.callCount(), 0);
+  assert.equal(model.create.mock.callCount(), 0);
 });
 test('upload extracts text, sanitizes filename and respects metadata overrides', async () => {
   // GROBID failure intentionally exercises local metadata fallback.
   mock.method(console, 'warn', () => {});
   model.create.mock.mockImplementation(async paper => ({ id: 2, ...paper }));
-  await upload.uploadPaper({ file: { buffer: Buffer.from('PDF fixture'), originalname: 'my paper.pdf' }, body: { title: 'Override', authors: 'Ada, Grace', year: '2025' } }, res);
+  await upload.uploadPaper({ file: { buffer: Buffer.from('PDF fixture'), originalname: 'my paper.pdf' }, body: { title: 'Override', authors: ' Ada,  Grace ', abstract: 'Override abstract', year: '2025' } }, res);
   assert.equal(res.code, 201);
   assert.equal(res.body.title, 'Override'); assert.deepEqual(res.body.authors, ['Ada', 'Grace']);
+  assert.equal(res.body.year, '2025');
+  assert.equal(res.body.abstract, 'Override abstract');
+  assert.deepEqual(model.create.mock.calls[0].arguments[0], {
+    title: 'Override', authors: ['Ada', 'Grace'], abstract: 'Override abstract', year: '2025',
+    fullText: parsedText, source: 'upload', pdfPath: res.body.pdfPath,
+  });
   assert.equal(res.body.fullText, parsedText); assert.equal(res.body.source, 'upload');
   assert.match(res.body.pdfPath, /^\/uploads\/\d+-my_paper.pdf$/);
   assert.equal(destroy.mock.callCount(), 1);
@@ -145,6 +212,9 @@ test('upload reports unreadable PDF without writing storage', async () => {
   getText.mock.mockImplementationOnce(async () => { throw new Error('corrupt PDF'); });
   await upload.uploadPaper({ file: { buffer: Buffer.from('bad'), originalname: 'bad.pdf' }, body: {} }, res);
   assert.equal(res.code, 422); assert.equal(fs.writeFileSync.mock.callCount(), 0);
+  assert.deepEqual(res.body, { error: 'The PDF could not be processed.' });
+  assert.equal(model.create.mock.callCount(), 0);
+  assert.equal(axios.post.mock.callCount(), 0);
 });
 test('local metadata handles empty text and normal academic text', () => {
   assert.deepEqual(metadata.parseLocalText('', 'scan.pdf'), { title: 'scan', authors: [], abstract: '', year: null });
@@ -225,4 +295,15 @@ for (const stage of ['write', 'database']) test(`upload reports ${stage} failure
   assert.deepEqual(res.body, { error: 'The PDF could not be processed.' });
   assert.equal(model.create.mock.callCount(), stage === 'write' ? 0 : 1);
   assert.equal(fs.writeFileSync.mock.callCount(), 1);
+});
+
+// PDFParse's installed README requires destroy() in finally, including getText errors.
+test('[DEFECT] upload destroys the PDF parser when text extraction fails', async () => {
+  getText.mock.mockImplementationOnce(async () => { throw new Error('corrupt PDF'); });
+  await upload.uploadPaper({ file: { buffer: Buffer.from('bad'), originalname: 'bad.pdf' }, body: {} }, res);
+  assert.equal(res.code, 422);
+  assert.deepEqual(res.body, { error: 'The PDF could not be processed.' });
+  assert.equal(model.create.mock.callCount(), 0);
+  assert.equal(fs.writeFileSync.mock.callCount(), 0);
+  assert.equal(destroy.mock.callCount(), 1, 'parser must be destroyed even after getText rejects');
 });

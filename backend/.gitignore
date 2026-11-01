@@ -3,3 +3,7 @@ node_modules/
 database.sqlite
 uploads/*
 !uploads/.gitkeep
+
+# Generated test coverage (evaluation evidence lives in reports/)
+/coverage/
+/.nyc_output/

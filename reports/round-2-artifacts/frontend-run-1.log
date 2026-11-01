@@ -1,0 +1,304 @@
+
+> frontend@0.1.0 test
+> react-scripts test --verbose --watchAll=false --runInBand --coverage --collectCoverageFrom=src/**/*.{js,jsx} --collectCoverageFrom=!src/index.js
+
+  console.warn
+    ⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.
+
+      41 | test('[DEFECT] paper load failure does not escape as an unhandled rejection', async () => {
+      42 |   api.getPaper.mockRejectedValueOnce(Object.assign(new Error('Paper load rejected'), { response: { status: 404, data: { error: 'Paper not found.' } } }));
+    > 43 |   render(<MemoryRouter initialEntries={['/paper/404']}><Routes><Route path="/paper/:id" element={<PaperDetailsPage />} /></Routes></MemoryRouter>);
+         |         ^
+      44 |   await finishRequest();
+      45 |   expect(api.getPaper).toHaveBeenCalledWith('404');
+      46 |   expect(screen.queryByRole('button', { name: 'Ask AI' })).not.toBeInTheDocument();
+
+      at warnOnce (node_modules/react-router/lib/deprecations.ts:9:13)
+      at logDeprecation (node_modules/react-router/lib/deprecations.ts:14:3)
+      at logV6DeprecationWarnings (node_modules/react-router/lib/deprecations.ts:26:5)
+      at node_modules/react-router/lib/components.tsx:257:25
+      at Object.react_stack_bottom_frame (node_modules/react-dom/cjs/react-dom-client.development.js:28656:20)
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:1048:13)
+      at commitHookEffectListMount (node_modules/react-dom/cjs/react-dom-client.development.js:13748:29)
+      at commitHookPassiveMountEffects (node_modules/react-dom/cjs/react-dom-client.development.js:13835:11)
+      at commitPassiveMountOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:16906:13)
+      at recursivelyTraversePassiveMountEffects (node_modules/react-dom/cjs/react-dom-client.development.js:16851:13)
+      at commitPassiveMountOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:16941:11)
+      at flushPassiveEffects (node_modules/react-dom/cjs/react-dom-client.development.js:20134:9)
+      at node_modules/react-dom/cjs/react-dom-client.development.js:19558:13
+      at flushActQueue (node_modules/react/cjs/react.development.js:664:34)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:960:10)
+      at node_modules/@testing-library/react/dist/act-compat.js:46:25
+      at renderRoot (node_modules/@testing-library/react/dist/pure.js:198:26)
+      at render (node_modules/@testing-library/react/dist/pure.js:300:10)
+      at Object.<anonymous> (src/pages/errors.regression.test.js:43:9)
+
+  console.warn
+    ⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath.
+
+      41 | test('[DEFECT] paper load failure does not escape as an unhandled rejection', async () => {
+      42 |   api.getPaper.mockRejectedValueOnce(Object.assign(new Error('Paper load rejected'), { response: { status: 404, data: { error: 'Paper not found.' } } }));
+    > 43 |   render(<MemoryRouter initialEntries={['/paper/404']}><Routes><Route path="/paper/:id" element={<PaperDetailsPage />} /></Routes></MemoryRouter>);
+         |         ^
+      44 |   await finishRequest();
+      45 |   expect(api.getPaper).toHaveBeenCalledWith('404');
+      46 |   expect(screen.queryByRole('button', { name: 'Ask AI' })).not.toBeInTheDocument();
+
+      at warnOnce (node_modules/react-router/lib/deprecations.ts:9:13)
+      at logDeprecation (node_modules/react-router/lib/deprecations.ts:14:3)
+      at logV6DeprecationWarnings (node_modules/react-router/lib/deprecations.ts:37:5)
+      at node_modules/react-router/lib/components.tsx:257:25
+      at Object.react_stack_bottom_frame (node_modules/react-dom/cjs/react-dom-client.development.js:28656:20)
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:1048:13)
+      at commitHookEffectListMount (node_modules/react-dom/cjs/react-dom-client.development.js:13748:29)
+      at commitHookPassiveMountEffects (node_modules/react-dom/cjs/react-dom-client.development.js:13835:11)
+      at commitPassiveMountOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:16906:13)
+      at recursivelyTraversePassiveMountEffects (node_modules/react-dom/cjs/react-dom-client.development.js:16851:13)
+      at commitPassiveMountOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:16941:11)
+      at flushPassiveEffects (node_modules/react-dom/cjs/react-dom-client.development.js:20134:9)
+      at node_modules/react-dom/cjs/react-dom-client.development.js:19558:13
+      at flushActQueue (node_modules/react/cjs/react.development.js:664:34)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:960:10)
+      at node_modules/@testing-library/react/dist/act-compat.js:46:25
+      at renderRoot (node_modules/@testing-library/react/dist/pure.js:198:26)
+      at render (node_modules/@testing-library/react/dist/pure.js:300:10)
+      at Object.<anonymous> (src/pages/errors.regression.test.js:43:9)
+
+FAIL src/pages/errors.regression.test.js
+  ✕ [DEFECT] library load failure does not escape as an unhandled rejection (25 ms)
+  ✕ [DEFECT] library deletion failure preserves the paper without an unhandled rejection (21 ms)
+  ✕ [DEFECT] paper load failure does not escape as an unhandled rejection (20 ms)
+
+  ● [DEFECT] library load failure does not escape as an unhandled rejection
+
+    Library load rejected
+
+      19 |
+      20 | test('[DEFECT] library load failure does not escape as an unhandled rejection', async () => {
+    > 21 |   api.getLibrary.mockRejectedValueOnce(Object.assign(new Error('Library load rejected'), { response: { status: 500, data: { error: 'Unable to load library.' } } }));
+         |                                                      ^
+      22 |   render(<LibraryPage />);
+      23 |   await finishRequest();
+      24 |   expect(api.getLibrary).toHaveBeenCalledTimes(1);
+
+      at Object.<anonymous> (src/pages/errors.regression.test.js:21:54)
+
+  ● [DEFECT] library deletion failure preserves the paper without an unhandled rejection
+
+    Library deletion rejected
+
+      29 |   const paper = { id: 1, title: 'Keep this paper', abstract: 'Saved abstract', year: 2024 };
+      30 |   api.getLibrary.mockResolvedValueOnce({ data: [paper] });
+    > 31 |   api.deletePaper.mockRejectedValueOnce(Object.assign(new Error('Library deletion rejected'), { response: { status: 500, data: { error: 'Unable to delete paper.' } } }));
+         |                                                       ^
+      32 |   render(<LibraryPage />);
+      33 |   await screen.findByRole('link', { name: paper.title });
+      34 |   fireEvent.click(screen.getByRole('button', { name: 'Remove' }));
+
+      at Object.<anonymous> (src/pages/errors.regression.test.js:31:55)
+
+  ● [DEFECT] paper load failure does not escape as an unhandled rejection
+
+    Paper load rejected
+
+      40 |
+      41 | test('[DEFECT] paper load failure does not escape as an unhandled rejection', async () => {
+    > 42 |   api.getPaper.mockRejectedValueOnce(Object.assign(new Error('Paper load rejected'), { response: { status: 404, data: { error: 'Paper not found.' } } }));
+         |                                                    ^
+      43 |   render(<MemoryRouter initialEntries={['/paper/404']}><Routes><Route path="/paper/:id" element={<PaperDetailsPage />} /></Routes></MemoryRouter>);
+      44 |   await finishRequest();
+      45 |   expect(api.getPaper).toHaveBeenCalledWith('404');
+
+      at Object.<anonymous> (src/pages/errors.regression.test.js:42:52)
+
+  console.warn
+    ⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.
+
+      110 | function renderDetails() {
+      111 |   api.getPaper.mockResolvedValue({ data: paper });
+    > 112 |   render(<MemoryRouter initialEntries={['/paper/1']}><Routes><Route path="/paper/:id" element={<PaperDetailsPage />} /></Routes></MemoryRouter>);
+          |         ^
+      113 | }
+      114 | test('paper details summarize and answer questions, blocking blank input and concurrent requests', async () => {
+      115 |   let resolveSummary;
+
+      at warnOnce (node_modules/react-router/lib/deprecations.ts:9:13)
+      at logDeprecation (node_modules/react-router/lib/deprecations.ts:14:3)
+      at logV6DeprecationWarnings (node_modules/react-router/lib/deprecations.ts:26:5)
+      at node_modules/react-router/lib/components.tsx:257:25
+      at Object.react_stack_bottom_frame (node_modules/react-dom/cjs/react-dom-client.development.js:28656:20)
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:1048:13)
+      at commitHookEffectListMount (node_modules/react-dom/cjs/react-dom-client.development.js:13748:29)
+      at commitHookPassiveMountEffects (node_modules/react-dom/cjs/react-dom-client.development.js:13835:11)
+      at commitPassiveMountOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:16906:13)
+      at recursivelyTraversePassiveMountEffects (node_modules/react-dom/cjs/react-dom-client.development.js:16851:13)
+      at commitPassiveMountOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:16941:11)
+      at flushPassiveEffects (node_modules/react-dom/cjs/react-dom-client.development.js:20134:9)
+      at node_modules/react-dom/cjs/react-dom-client.development.js:19558:13
+      at flushActQueue (node_modules/react/cjs/react.development.js:664:34)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:960:10)
+      at node_modules/@testing-library/react/dist/act-compat.js:46:25
+      at renderRoot (node_modules/@testing-library/react/dist/pure.js:198:26)
+      at render (node_modules/@testing-library/react/dist/pure.js:300:10)
+      at renderDetails (src/pages/workflows.test.js:112:9)
+      at Object.<anonymous> (src/pages/workflows.test.js:117:3)
+
+  console.warn
+    ⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath.
+
+      110 | function renderDetails() {
+      111 |   api.getPaper.mockResolvedValue({ data: paper });
+    > 112 |   render(<MemoryRouter initialEntries={['/paper/1']}><Routes><Route path="/paper/:id" element={<PaperDetailsPage />} /></Routes></MemoryRouter>);
+          |         ^
+      113 | }
+      114 | test('paper details summarize and answer questions, blocking blank input and concurrent requests', async () => {
+      115 |   let resolveSummary;
+
+      at warnOnce (node_modules/react-router/lib/deprecations.ts:9:13)
+      at logDeprecation (node_modules/react-router/lib/deprecations.ts:14:3)
+      at logV6DeprecationWarnings (node_modules/react-router/lib/deprecations.ts:37:5)
+      at node_modules/react-router/lib/components.tsx:257:25
+      at Object.react_stack_bottom_frame (node_modules/react-dom/cjs/react-dom-client.development.js:28656:20)
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:1048:13)
+      at commitHookEffectListMount (node_modules/react-dom/cjs/react-dom-client.development.js:13748:29)
+      at commitHookPassiveMountEffects (node_modules/react-dom/cjs/react-dom-client.development.js:13835:11)
+      at commitPassiveMountOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:16906:13)
+      at recursivelyTraversePassiveMountEffects (node_modules/react-dom/cjs/react-dom-client.development.js:16851:13)
+      at commitPassiveMountOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:16941:11)
+      at flushPassiveEffects (node_modules/react-dom/cjs/react-dom-client.development.js:20134:9)
+      at node_modules/react-dom/cjs/react-dom-client.development.js:19558:13
+      at flushActQueue (node_modules/react/cjs/react.development.js:664:34)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:960:10)
+      at node_modules/@testing-library/react/dist/act-compat.js:46:25
+      at renderRoot (node_modules/@testing-library/react/dist/pure.js:198:26)
+      at render (node_modules/@testing-library/react/dist/pure.js:300:10)
+      at renderDetails (src/pages/workflows.test.js:112:9)
+      at Object.<anonymous> (src/pages/workflows.test.js:117:3)
+
+PASS src/pages/workflows.test.js
+  ✓ blank search and upload without a file do not call the API (18 ms)
+  ✓ search via Enter orders results newest first, with missing years last (17 ms)
+  ✓ empty search results clear previous papers and finish the searching state (26 ms)
+  ✓ search displays Provider unavailable (9 ms)
+  ✓ search displays Search failed. (9 ms)
+  ✓ saving a search result shows success and a failed save can be retried (23 ms)
+  ✓ PDF upload sends multipart data and displays processing errors (9 ms)
+  ✓ library shows saved papers and removes them after API success (16 ms)
+  ✓ empty library offers getting started guidance (1 ms)
+  ✓ paper details summarize and answer questions, blocking blank input and concurrent requests (29 ms)
+  ✓ AI displays AI unavailable and allows retry (17 ms)
+  ✓ AI displays AI request failed. and allows retry (16 ms)
+  ✓ library renders uploaded papers without year or abstract and preserves other papers after deletion (18 ms)
+  ✓ paper details render uploaded metadata fallbacks and an external original link (8 ms)
+  ✓ a null paper response leaves the page in its current loading state (1 ms)
+  ✓ search sorts multiple undated results after numeric string years (11 ms)
+  ✓ upload shows fallback error for network failure and allows a retry that navigates to the saved paper (63 ms)
+
+  console.warn
+    ⚠️ React Router Future Flag Warning: React Router will begin wrapping state updates in `React.startTransition` in v7. You can use the `v7_startTransition` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_starttransition.
+
+      3 |
+      4 | test('renders the ResearchLLM navigation', () => {
+    > 5 |   render(<App />);
+        |         ^
+      6 |   expect(screen.getByText('ResearchLLM')).toBeInTheDocument();
+      7 | });
+      8 |
+
+      at warnOnce (node_modules/react-router/lib/deprecations.ts:9:13)
+      at logDeprecation (node_modules/react-router/lib/deprecations.ts:14:3)
+      at Object.logV6DeprecationWarnings [as UNSAFE_logV6DeprecationWarnings] (node_modules/react-router/lib/deprecations.ts:26:5)
+      at node_modules/react-router-dom/index.tsx:816:25
+      at Object.react_stack_bottom_frame (node_modules/react-dom/cjs/react-dom-client.development.js:28656:20)
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:1048:13)
+      at commitHookEffectListMount (node_modules/react-dom/cjs/react-dom-client.development.js:13748:29)
+      at commitHookPassiveMountEffects (node_modules/react-dom/cjs/react-dom-client.development.js:13835:11)
+      at commitPassiveMountOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:16906:13)
+      at recursivelyTraversePassiveMountEffects (node_modules/react-dom/cjs/react-dom-client.development.js:16851:13)
+      at commitPassiveMountOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:16898:11)
+      at recursivelyTraversePassiveMountEffects (node_modules/react-dom/cjs/react-dom-client.development.js:16851:13)
+      at commitPassiveMountOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:16941:11)
+      at flushPassiveEffects (node_modules/react-dom/cjs/react-dom-client.development.js:20134:9)
+      at node_modules/react-dom/cjs/react-dom-client.development.js:19558:13
+      at flushActQueue (node_modules/react/cjs/react.development.js:664:34)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:960:10)
+      at node_modules/@testing-library/react/dist/act-compat.js:46:25
+      at renderRoot (node_modules/@testing-library/react/dist/pure.js:198:26)
+      at render (node_modules/@testing-library/react/dist/pure.js:300:10)
+      at Object.<anonymous> (src/App.test.js:5:9)
+
+  console.warn
+    ⚠️ React Router Future Flag Warning: Relative route resolution within Splat routes is changing in v7. You can use the `v7_relativeSplatPath` future flag to opt-in early. For more information, see https://reactrouter.com/v6/upgrading/future#v7_relativesplatpath.
+
+      3 |
+      4 | test('renders the ResearchLLM navigation', () => {
+    > 5 |   render(<App />);
+        |         ^
+      6 |   expect(screen.getByText('ResearchLLM')).toBeInTheDocument();
+      7 | });
+      8 |
+
+      at warnOnce (node_modules/react-router/lib/deprecations.ts:9:13)
+      at logDeprecation (node_modules/react-router/lib/deprecations.ts:14:3)
+      at Object.logV6DeprecationWarnings [as UNSAFE_logV6DeprecationWarnings] (node_modules/react-router/lib/deprecations.ts:37:5)
+      at node_modules/react-router-dom/index.tsx:816:25
+      at Object.react_stack_bottom_frame (node_modules/react-dom/cjs/react-dom-client.development.js:28656:20)
+      at runWithFiberInDEV (node_modules/react-dom/cjs/react-dom-client.development.js:1048:13)
+      at commitHookEffectListMount (node_modules/react-dom/cjs/react-dom-client.development.js:13748:29)
+      at commitHookPassiveMountEffects (node_modules/react-dom/cjs/react-dom-client.development.js:13835:11)
+      at commitPassiveMountOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:16906:13)
+      at recursivelyTraversePassiveMountEffects (node_modules/react-dom/cjs/react-dom-client.development.js:16851:13)
+      at commitPassiveMountOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:16898:11)
+      at recursivelyTraversePassiveMountEffects (node_modules/react-dom/cjs/react-dom-client.development.js:16851:13)
+      at commitPassiveMountOnFiber (node_modules/react-dom/cjs/react-dom-client.development.js:16941:11)
+      at flushPassiveEffects (node_modules/react-dom/cjs/react-dom-client.development.js:20134:9)
+      at node_modules/react-dom/cjs/react-dom-client.development.js:19558:13
+      at flushActQueue (node_modules/react/cjs/react.development.js:664:34)
+      at Object.<anonymous>.process.env.NODE_ENV.exports.act (node_modules/react/cjs/react.development.js:960:10)
+      at node_modules/@testing-library/react/dist/act-compat.js:46:25
+      at renderRoot (node_modules/@testing-library/react/dist/pure.js:198:26)
+      at render (node_modules/@testing-library/react/dist/pure.js:300:10)
+      at Object.<anonymous> (src/App.test.js:5:9)
+
+PASS src/App.test.js
+  ✓ renders the ResearchLLM navigation (11 ms)
+
+PASS src/components/PaperCard.test.js
+  ✓ paper card supplies readable fallbacks when optional metadata is absent (7 ms)
+  ✓ paper card limits author preview to three and links to the original paper (3 ms)
+
+PASS src/services/apiService.test.js
+  ✓ search uses the correct HTTP request and returns the response unchanged
+  ✓ library uses the correct HTTP request and returns the response unchanged
+  ✓ paper uses the correct HTTP request and returns the response unchanged
+  ✓ save uses the correct HTTP request and returns the response unchanged
+  ✓ delete uses the correct HTTP request and returns the response unchanged
+  ✓ upload uses the correct HTTP request and returns the response unchanged
+  ✓ AI uses the correct HTTP request and returns the response unchanged (1 ms)
+  ✓ API failures propagate unchanged so pages can handle provider errors
+  ✓ empty abstract undefined gets readable fallback
+  ✓ empty abstract "" gets readable fallback
+  ✓ empty abstract "<p> &nbsp; </p>" gets readable fallback
+  ✓ abstract cleanup decodes nested entities, removes tags and normalizes whitespace
+
+----------------------|---------|----------|---------|---------|-------------------
+File                  | % Stmts | % Branch | % Funcs | % Lines | Uncovered Line #s 
+----------------------|---------|----------|---------|---------|-------------------
+All files             |     100 |      100 |     100 |     100 |                   
+ src                  |     100 |      100 |     100 |     100 |                   
+  App.js              |     100 |      100 |     100 |     100 |                   
+ src/components       |     100 |      100 |     100 |     100 |                   
+  PaperCard.js        |     100 |      100 |     100 |     100 |                   
+  SearchBar.js        |     100 |      100 |     100 |     100 |                   
+ src/pages            |     100 |      100 |     100 |     100 |                   
+  LibraryPage.js      |     100 |      100 |     100 |     100 |                   
+  PaperDetailsPage.js |     100 |      100 |     100 |     100 |                   
+  SearchPage.js       |     100 |      100 |     100 |     100 |                   
+ src/services         |     100 |      100 |     100 |     100 |                   
+  apiService.js       |     100 |      100 |     100 |     100 |                   
+----------------------|---------|----------|---------|---------|-------------------
+Test Suites: 1 failed, 4 passed, 5 total
+Tests:       3 failed, 32 passed, 35 total
+Snapshots:   0 total
+Time:        1.393 s, estimated 2 s
+Ran all test suites.

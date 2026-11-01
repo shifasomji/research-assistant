@@ -1,5 +1,5 @@
 import React from 'react';
-import { render, screen, fireEvent, waitFor } from '@testing-library/react';
+import { render, screen, fireEvent, waitFor, act } from '@testing-library/react';
 import { MemoryRouter, Routes, Route } from 'react-router-dom';
 import SearchPage from './SearchPage';
 import LibraryPage from './LibraryPage';
@@ -12,7 +12,7 @@ jest.mock('../services/apiService', () => ({
   getLibrary: jest.fn(), deletePaper: jest.fn(), getPaper: jest.fn(), askAI: jest.fn(),
 }));
 const paper = { id: 1, title: 'Research findings', authors: ['Ada'], abstract: 'The abstract', year: 2024, source: 'search' };
-beforeEach(() => jest.clearAllMocks());
+beforeEach(() => jest.resetAllMocks());
 const searchInput = () => screen.getByPlaceholderText('Search by title, topic, or keyword…');
 const runSearch = () => {
   fireEvent.change(searchInput(), { target: { value: 'AI' } });
@@ -35,12 +35,24 @@ test('search via Enter orders results newest first, with missing years last', as
   expect(api.searchPapers).toHaveBeenCalledWith('AI');
   expect(screen.getAllByRole('heading', { level: 3 }).map(x => x.textContent)).toEqual(['Newest', 'Research findings', 'Undated']);
 });
-test('empty search results render without paper cards', async () => {
-  api.searchPapers.mockResolvedValue({ data: [] });
+test('empty search results clear previous papers and finish the searching state', async () => {
+  let resolveEmpty;
+  api.searchPapers.mockResolvedValueOnce({ data: [paper] })
+    .mockImplementationOnce(() => new Promise(resolve => { resolveEmpty = resolve; }));
   render(<SearchPage />); runSearch();
-  await waitFor(() => expect(screen.queryByText('Searching…')).not.toBeInTheDocument());
+  await screen.findByRole('heading', { name: paper.title });
+  expect(screen.getByText(/^1 papers?$/)).toBeInTheDocument();
+  runSearch();
+  expect(screen.getByText('Searching…')).toBeInTheDocument();
+  await act(async () => resolveEmpty({ data: [] }));
+  expect(screen.queryByText('Searching…')).not.toBeInTheDocument();
   expect(screen.queryAllByRole('article')).toHaveLength(0);
+  expect(screen.queryByText(/^1 papers?$/)).not.toBeInTheDocument();
+  expect(screen.getByRole('heading', { name: 'Search results' })).toBeInTheDocument();
+  expect(screen.getByRole('button', { name: 'Search' })).toBeEnabled();
+  expect(api.searchPapers).toHaveBeenCalledTimes(2);
 });
+
 for (const [error, message] of [[{ response: { data: { error: 'Provider unavailable' } } }, 'Provider unavailable'], [new Error('offline'), 'Search failed.']]) {
   test(`search displays ${message}`, async () => {
     api.searchPapers.mockRejectedValue(error);
@@ -50,15 +62,24 @@ for (const [error, message] of [[{ response: { data: { error: 'Provider unavaila
 }
 test('saving a search result shows success and a failed save can be retried', async () => {
   api.searchPapers.mockResolvedValue({ data: [paper] });
-  api.savePaper.mockRejectedValueOnce(new Error('offline')).mockResolvedValueOnce({ data: paper });
+  let rejectSave;
+  api.savePaper.mockImplementationOnce(() => new Promise((_resolve, reject) => { rejectSave = reject; }))
+    .mockResolvedValueOnce({ data: paper });
   render(<SearchPage />); runSearch();
   const save = await screen.findByRole('button', { name: 'Save to library' });
   fireEvent.click(save);
-  await waitFor(() => expect(api.savePaper).toHaveBeenCalledTimes(1));
+  await act(async () => rejectSave(new Error('offline')));
+  expect(api.savePaper).toHaveBeenCalledTimes(1);
+  expect(api.savePaper).toHaveBeenLastCalledWith(paper);
+  expect(screen.queryByRole('button', { name: 'Saved ✓' })).not.toBeInTheDocument();
+  expect(save).toHaveTextContent('Save to library');
+  expect(save).toBeEnabled();
   fireEvent.click(save);
   expect(await screen.findByRole('button', { name: 'Saved ✓' })).toBeInTheDocument();
+  expect(api.savePaper).toHaveBeenCalledTimes(2);
   expect(api.savePaper).toHaveBeenLastCalledWith(paper);
 });
+
 test('PDF upload sends multipart data and displays processing errors', async () => {
   api.uploadPaper.mockRejectedValue({ response: { data: { error: 'The PDF could not be processed.' } } });
   const { container } = render(<SearchPage />);
@@ -79,9 +100,11 @@ test('library shows saved papers and removes them after API success', async () =
   expect(api.deletePaper).toHaveBeenCalledWith(1);
 });
 test('empty library offers getting started guidance', async () => {
-  api.getLibrary.mockResolvedValue({ data: [] });
+  const loaded = Promise.resolve({ data: [] });
+  api.getLibrary.mockReturnValueOnce(loaded);
   render(<LibraryPage />);
-  await waitFor(() => expect(api.getLibrary).toHaveBeenCalledTimes(1));
+  await act(async () => { await loaded; });
+  expect(api.getLibrary).toHaveBeenCalledTimes(1);
   expect(screen.getByText(/Your library is empty/)).toBeInTheDocument();
 });
 function renderDetails() {
@@ -96,17 +119,29 @@ test('paper details summarize and answer questions, blocking blank input and con
   await screen.findByRole('heading', { name: paper.title });
   const ask = screen.getByRole('button', { name: 'Ask AI' });
   expect(ask).toBeDisabled();
+  fireEvent.click(ask);
+  expect(api.askAI).not.toHaveBeenCalled();
+  const input = screen.getByPlaceholderText('Ask a question about the paper…');
+  fireEvent.change(input, { target: { value: 'What are the findings?' } });
   fireEvent.click(screen.getByRole('button', { name: 'Summarize paper' }));
   expect(screen.getByRole('button', { name: 'Working…' })).toBeDisabled();
   expect(ask).toBeDisabled();
-  expect(api.askAI).toHaveBeenCalledWith({ paperId: '1', question: '', mode: 'summary' });
-  resolveSummary({ data: { answer: 'Summary text' } });
+  fireEvent.click(screen.getByRole('button', { name: 'Working…' }));
+  fireEvent.click(ask);
+  expect(api.askAI).toHaveBeenCalledTimes(1);
+  expect(api.askAI).toHaveBeenCalledWith({ paperId: '1', question: 'What are the findings?', mode: 'summary' });
+  await act(async () => resolveSummary({ data: { answer: 'Summary text' } }));
   await screen.findByText('Summary text');
-  const input = screen.getByPlaceholderText('Ask a question about the paper…');
   fireEvent.change(input, { target: { value: '   ' } }); expect(ask).toBeDisabled();
   fireEvent.change(input, { target: { value: 'What are the findings?' } });
-  api.askAI.mockResolvedValueOnce({ data: { answer: 'Findings answer' } });
+  let resolveQuestion;
+  api.askAI.mockImplementationOnce(() => new Promise(resolve => { resolveQuestion = resolve; }));
   fireEvent.click(ask);
+  expect(screen.queryByText('Summary text')).not.toBeInTheDocument();
+  fireEvent.click(ask);
+  fireEvent.click(screen.getByRole('button', { name: 'Working…' }));
+  expect(api.askAI).toHaveBeenCalledTimes(2);
+  await act(async () => resolveQuestion({ data: { answer: 'Findings answer' } }));
   expect(await screen.findByText('Findings answer')).toBeInTheDocument();
   expect(api.askAI).toHaveBeenLastCalledWith({ paperId: '1', question: 'What are the findings?', mode: 'question' });
 });
@@ -116,6 +151,15 @@ for (const [error, message] of [[{ response: { data: { error: 'AI unavailable' }
     renderDetails();
     fireEvent.click(await screen.findByRole('button', { name: 'Summarize paper' }));
     expect(await screen.findByText(message)).toBeInTheDocument();
+    const retry = screen.getByRole('button', { name: 'Summarize paper' });
+    expect(retry).toBeEnabled();
+    expect(api.askAI).toHaveBeenCalledTimes(1);
+    api.askAI.mockResolvedValueOnce({ data: { answer: 'Recovered summary' } });
+    fireEvent.click(retry);
+    expect(await screen.findByText('Recovered summary')).toBeInTheDocument();
+    expect(screen.queryByText(message)).not.toBeInTheDocument();
+    expect(api.askAI).toHaveBeenCalledTimes(2);
+    expect(api.askAI).toHaveBeenLastCalledWith({ paperId: '1', question: '', mode: 'summary' });
     expect(screen.getByRole('button', { name: 'Summarize paper' })).toBeEnabled();
   });
 }
@@ -133,7 +177,7 @@ test('library renders uploaded papers without year or abstract and preserves oth
   fireEvent.click(screen.getAllByRole('button', { name: 'Remove' })[1]);
   expect(api.deletePaper).toHaveBeenCalledWith(2);
   expect(screen.getByRole('link', { name: uploaded.title })).toBeInTheDocument();
-  resolveDelete({});
+  await act(async () => resolveDelete({}));
   await waitFor(() => expect(screen.queryByRole('link', { name: uploaded.title })).not.toBeInTheDocument());
   expect(screen.getByRole('link', { name: paper.title })).toBeInTheDocument();
   expect(screen.getByText('1 saved')).toBeInTheDocument();
@@ -152,9 +196,11 @@ test('paper details render uploaded metadata fallbacks and an external original 
   expect(screen.getByRole('link', { name: /Open original paper/ })).toHaveAttribute('href', 'https://paper.test/original');
 });
 test('a null paper response leaves the page in its current loading state', async () => {
-  api.getPaper.mockResolvedValueOnce({ data: null });
+  const loaded = Promise.resolve({ data: null });
+  api.getPaper.mockReturnValueOnce(loaded);
   renderRoundOneDetails();
-  await waitFor(() => expect(api.getPaper).toHaveBeenCalledWith('7'));
+  await act(async () => { await loaded; });
+  expect(api.getPaper).toHaveBeenCalledWith('7');
   expect(screen.getByText('Loading paper…')).toBeInTheDocument();
   expect(screen.queryByRole('button', { name: 'Ask AI' })).not.toBeInTheDocument();
 });

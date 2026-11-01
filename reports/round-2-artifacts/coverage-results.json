@@ -1,0 +1,23 @@
+{
+  "backend": {
+    "statements": 100.0,
+    "branches": 100.0,
+    "functions": 100.0,
+    "lines": 100.0
+  },
+  "frontend": {
+    "statements": 100.0,
+    "branches": 100.0,
+    "functions": 100.0,
+    "lines": 100.0
+  },
+  "frontendMeasuredFiles": [
+    "src/App.js",
+    "src/components/PaperCard.js",
+    "src/components/SearchBar.js",
+    "src/pages/LibraryPage.js",
+    "src/pages/PaperDetailsPage.js",
+    "src/pages/SearchPage.js",
+    "src/services/apiService.js"
+  ]
+}

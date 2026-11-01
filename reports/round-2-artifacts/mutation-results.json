@@ -1,0 +1,98 @@
+[
+  {
+    "version": "round1",
+    "mutation": "search-author",
+    "test": "^search normalizes Semantic Scholar",
+    "controlExitCode": 0,
+    "mutantExitCode": 1,
+    "detected": true
+  },
+  {
+    "version": "round1",
+    "mutation": "metadata-title",
+    "test": "^GROBID extracts and cleans metadata",
+    "controlExitCode": 0,
+    "mutantExitCode": 1,
+    "detected": true
+  },
+  {
+    "version": "round1",
+    "mutation": "deletion-id",
+    "test": "^library retrieves and deletes existing papers",
+    "controlExitCode": 0,
+    "mutantExitCode": 1,
+    "detected": true
+  },
+  {
+    "version": "round1",
+    "mutation": "AI-validation",
+    "test": "^AI validates input",
+    "controlExitCode": 0,
+    "mutantExitCode": 1,
+    "detected": true
+  },
+  {
+    "version": "round1",
+    "mutation": "upload-year-override",
+    "test": "^upload extracts text, sanitizes filename and respects metadata overrides$",
+    "controlExitCode": 0,
+    "mutantExitCode": 0,
+    "detected": false
+  },
+  {
+    "version": "round1",
+    "mutation": "AI-source-substitution",
+    "test": "^AI question sends grounded prompt and returns answer$",
+    "controlExitCode": 0,
+    "mutantExitCode": 0,
+    "detected": false
+  },
+  {
+    "version": "round2",
+    "mutation": "search-author",
+    "test": "^search normalizes Semantic Scholar",
+    "controlExitCode": 0,
+    "mutantExitCode": 1,
+    "detected": true
+  },
+  {
+    "version": "round2",
+    "mutation": "metadata-title",
+    "test": "^GROBID extracts and cleans metadata",
+    "controlExitCode": 0,
+    "mutantExitCode": 1,
+    "detected": true
+  },
+  {
+    "version": "round2",
+    "mutation": "deletion-id",
+    "test": "^library retrieves and deletes existing papers",
+    "controlExitCode": 0,
+    "mutantExitCode": 1,
+    "detected": true
+  },
+  {
+    "version": "round2",
+    "mutation": "AI-validation",
+    "test": "^AI validates input",
+    "controlExitCode": 0,
+    "mutantExitCode": 1,
+    "detected": true
+  },
+  {
+    "version": "round2",
+    "mutation": "upload-year-override",
+    "test": "^upload extracts text, sanitizes filename and respects metadata overrides$",
+    "controlExitCode": 0,
+    "mutantExitCode": 1,
+    "detected": true
+  },
+  {
+    "version": "round2",
+    "mutation": "AI-source-substitution",
+    "test": "^AI question sends grounded prompt and returns answer$",
+    "controlExitCode": 0,
+    "mutantExitCode": 1,
+    "detected": true
+  }
+]

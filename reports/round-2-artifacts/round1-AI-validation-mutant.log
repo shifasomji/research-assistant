@@ -1,0 +1,30 @@
+[mutation applied] AI-validation
+✖ AI validates input, missing papers and missing API key (1.32325ms)
+ℹ tests 1
+ℹ suites 0
+ℹ pass 0
+ℹ fail 1
+ℹ cancelled 0
+ℹ skipped 0
+ℹ todo 0
+ℹ duration_ms 75.392959
+
+✖ failing tests:
+
+test at test/controllers.test.js:104:1
+✖ AI validates input, missing papers and missing API key (1.32325ms)
+  AssertionError [ERR_ASSERTION]: Expected values to be strictly equal:
+  
+  404 !== 400
+  
+      at TestContext.<anonymous> (/Users/shifasomji/Documents/Purdue/Fall 26/CS 593 - ASE/research-assistant/backend/test/controllers.test.js:106:45)
+      at process.processTicksAndRejections (node:internal/process/task_queues:104:5)
+      at async Test.run (node:internal/test_runner/test:1409:7)
+      at async startSubtestAfterBootstrap (node:internal/test_runner/harness:387:3) {
+    generatedMessage: true,
+    code: 'ERR_ASSERTION',
+    actual: 404,
+    expected: 400,
+    operator: 'strictEqual',
+    diff: 'simple'
+  }
